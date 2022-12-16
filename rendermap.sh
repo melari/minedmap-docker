@@ -1,2 +1,2 @@
 #!/bin/bash
-MinedMap /save /MinedMap/viewer/data
+/usr/local/bin/MinedMap /savegame /mapdata

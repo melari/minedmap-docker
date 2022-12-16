@@ -1,24 +1,39 @@
 FROM ubuntu:latest
+ARG MINEDMAP_VERSION=1.19.1
+
+WORKDIR /home/minecraft
+RUN adduser --disabled-password --uid 1000 minecraft
+
 RUN apt-get -y update
-RUN apt-get -y install git gcc clang clang-tools cmake pkg-config zlib1g-dev libpng-dev nginx cron
-RUN git clone https://github.com/NeoRaider/MinedMap.git
-RUN mkdir MinedMap-build
-RUN cd MinedMap-build
-RUN cmake ../MinedMap -DCMAKE_BUILD_TYPE=RELEASE
+RUN apt-get -y install git gcc clang clang-tools cmake pkg-config zlib1g-dev libpng-dev cron curl
+RUN git clone --depth 1 --branch v${MINEDMAP_VERSION} https://github.com/NeoRaider/MinedMap.git /home/minecraft/minedmap-source
+
+#install caddy
+RUN apt install -y debian-keyring debian-archive-keyring apt-transport-https -y
+RUN curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+RUN curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | tee /etc/apt/sources.list.d/caddy-stable.list
+RUN apt-get update
+RUN apt-get install caddy -y
+
+# Compile MinedMap
+WORKDIR /home/minecraft/minedmap-build
+RUN cmake ../minedmap-source -DCMAKE_BUILD_TYPE=RELEASE
 RUN make
-RUN cp /src/MinedMap /usr/local/bin
-RUN mkdir /MinedMap/viewer/data
-COPY entrypoint.sh /entrypoint.sh
-COPY rendermap.sh /rendermap.sh
+RUN mv /home/minecraft/minedmap-build/src/MinedMap /usr/local/bin
 
-COPY default /etc/nginx/sites-available/default
-EXPOSE 80/tcp
+#set up cron
+RUN echo "*/5 * * * * /rendermap.sh > /proc/1/fd/1 2>&1" >> /etc/cron.d/rendermap-cron \
+    # Give the necessary rights to the user to run the cron
+    && crontab -u minecraft /etc/cron.d/rendermap-cron \
+    && chmod u+s /usr/sbin/cron
 
-# RUN MinedMap /save /MinedMap/viewer/data
-# CMD ["/usr/sbin/nginx", "-g", "daemon off;"]
+COPY  --chown=minecraft:minecraft entrypoint.sh /entrypoint.sh
+COPY  --chown=minecraft:minecraft rendermap.sh /rendermap.sh
+RUN chmod 777 /rendermap.sh
+
+WORKDIR /home/minecraft
+RUN chown -R minecraft:minecraft /home/minecraft
+
+USER minecraft
 
 ENTRYPOINT ["/bin/bash", "/entrypoint.sh"]
-
-
-# RUN ./src/MinedMap /path/to/save/game /path/to/viewer/data
-# CMD ["/src/MinedMap","/save","/MinedMap/viewer/data"]
