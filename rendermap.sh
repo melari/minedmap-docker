@@ -1,2 +1,2 @@
 #!/bin/bash
-/usr/local/bin/MinedMap /savegame /mapdata
+/home/minecraft/minedmap --sign-filter '.' /savegame /mapdata

@@ -2,10 +2,10 @@ FROM ubuntu:latest
 ARG MINEDMAP_VERSION=2.2.0
 
 WORKDIR /home/minecraft
-RUN adduser --disabled-password --uid 1000 minecraft
+RUN useradd -m -u 1001 -s /bin/bash minecraft
 
 RUN apt-get -y update
-RUN apt-get -y install git gcc clang clang-tools cmake pkg-config zlib1g-dev libpng-dev cron curl
+RUN apt-get -y install git unzip cron curl
 RUN git clone --depth 1 --branch v${MINEDMAP_VERSION} https://github.com/NeoRaider/MinedMap.git /home/minecraft/minedmap-source
 
 #install caddy
@@ -15,11 +15,12 @@ RUN curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | t
 RUN apt-get update
 RUN apt-get install caddy -y
 
-# Compile MinedMap
-WORKDIR /home/minecraft/minedmap-build
-RUN cmake ../minedmap-source -DCMAKE_BUILD_TYPE=RELEASE
-RUN make
-RUN mv /home/minecraft/minedmap-build/src/MinedMap /usr/local/bin
+#grab MinedMap
+RUN curl -L -o MinedMap.zip "https://github.com/neocturne/MinedMap/releases/download/v${MINEDMAP_VERSION}/MinedMap-${MINEDMAP_VERSION}-x86_64-unknown-linux-gnu.zip" && \
+    unzip MinedMap.zip && \
+    rm MinedMap.zip
+RUN mv "MinedMap-${MINEDMAP_VERSION}-x86_64-unknown-linux-gnu/minedmap" minedmap
+RUN chmod +x minedmap
 
 #set up cron
 RUN echo "0 * * * * /rendermap.sh > /proc/1/fd/1 2>&1" >> /etc/cron.d/rendermap-cron \

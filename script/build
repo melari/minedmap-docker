@@ -1,0 +1,5 @@
+# This is my personal build script. It won't work for you.
+
+docker login ghcr.io -u melari
+docker buildx build --platform=linux/amd64 -t ghcr.io/melari/minedmap-docker:latest .
+docker push ghcr.io/melari/minedmap-docker:latest
