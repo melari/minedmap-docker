@@ -22,7 +22,7 @@ RUN make
 RUN mv /home/minecraft/minedmap-build/src/MinedMap /usr/local/bin
 
 #set up cron
-RUN echo "*/5 * * * * /rendermap.sh > /proc/1/fd/1 2>&1" >> /etc/cron.d/rendermap-cron \
+RUN echo "0 * * * * /rendermap.sh > /proc/1/fd/1 2>&1" >> /etc/cron.d/rendermap-cron \
     # Give the necessary rights to the user to run the cron
     && crontab -u minecraft /etc/cron.d/rendermap-cron \
     && chmod u+s /usr/sbin/cron
