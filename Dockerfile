@@ -1,5 +1,5 @@
 FROM ubuntu:latest
-ARG MINEDMAP_VERSION=1.19.1
+ARG MINEDMAP_VERSION=2.2.0
 
 WORKDIR /home/minecraft
 RUN adduser --disabled-password --uid 1000 minecraft
